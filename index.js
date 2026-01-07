@@ -1,4 +1,4 @@
-/**
+   /**
  * AI CV Aligner – Single File Version
  * Paste job link + CV → get aligned CV + match score
  */
@@ -8,17 +8,31 @@ const express = require("express");
 const axios = require("axios");
 const cheerio = require("cheerio");
 const OpenAI = require("openai");
+const cors = require("cors");
 
 const app = express();
+
+/* ------------------ MIDDLEWARE ------------------ */
+app.use(cors()); // IMPORTANT for website & extension
 app.use(express.json());
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY
 });
 
+/* ------------------ HEALTH CHECK ROUTE ------------------ */
+app.get("/", (req, res) => {
+  res.send("AI CV Aligner is running 🚀");
+});
+
 /* ------------------ JD FETCHER ------------------ */
 async function fetchJD(jobUrl) {
-  const { data } = await axios.get(jobUrl);
+  const { data } = await axios.get(jobUrl, {
+    headers: {
+      "User-Agent": "Mozilla/5.0"
+    }
+  });
+
   const $ = cheerio.load(data);
 
   return $("body")
@@ -108,6 +122,7 @@ app.post("/align", async (req, res) => {
     });
 
   } catch (err) {
+    console.error(err);
     res.status(500).json({
       error: "Something went wrong",
       details: err.message
@@ -117,6 +132,6 @@ app.post("/align", async (req, res) => {
 
 /* ------------------ START SERVER ------------------ */
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () =>
-  console.log(`AI CV Aligner running on port ${PORT}`)
-);
+app.listen(PORT, () => {
+  console.log(`AI CV Aligner running on port ${PORT}`);
+});
